@@ -34,8 +34,15 @@ module.exports = function(app, db){
                 res.send({ 'error': 'an error has occured' });
                 logger.error('не удалось получить данные по id');
             } else {
+                if (item) {
                 res.send (item);
                 logger.info('данные по id получены успешно');
+                } else
+                {
+                    res.status(502).send('item not exhists');
+                    logger.error('данные о товаре отсутствуют');
+                }
+                
             }
         });
     });

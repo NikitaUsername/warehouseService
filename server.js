@@ -12,15 +12,16 @@ app.use(BodyParser.urlencoded({ extended: true }));
 
 MongoClient.connect(url, function(err, database) {
     if(!err) {
-        console.log("We are connected");
+        console.log("DB is connected");
     }
     const db = database.db(dbName);
     route(app, db);
+    app.listen(port, () =>{
+        console.log('hello: ' + port);
+    });
 });
 
-app.listen(port, () =>{
-    console.log('hello!' + port);
-});
+
 
 
 
