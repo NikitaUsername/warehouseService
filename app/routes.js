@@ -5,8 +5,47 @@ log4js.configure({
     categories: { default: { appenders: ['fileAppender'], level: 'info' } }
   });
 const logger = log4js.getLogger('server');
-module.exports = function(app, db){
+module.exports = function(app, db, client){
 
+
+    app.put('/warehouse/items/:id/addition/:amount', async (req,res) =>{
+        const id = req.params.id;
+        const info = { '_id': new ObjectID(id) };
+        const amount = +req.params.amount;
+        if ( !req.params.amount || !Number.isInteger(+req.params.amount)) {
+            logger.error('данные количества введены не верно');
+            res.status(400).send('amount is not numeric or not integer');
+        } else { 
+        // добавить транзакции  
+        const session = client.startSession();
+        const transactionOptions = {
+            readPreference: 'primary',
+            readConcern: { level: 'local' },
+            writeConcern: { w: 'majority' }
+          };
+        try{
+        await session.withTransaction(async () => {
+        await db.collection('warehousecollection').update( info, {$inc: { amount: +amount } }, (err, item) => {
+            if(err) {
+                res.send({ 'error': 'an error has occured' });
+                logger.error('не удалось изменить данные о товаре');
+            } else {
+                db.collection('warehousecollection').findOne(info, (err, item) => {
+                    if(err) {
+                        res.send({ 'error': 'an error has occured' });
+                    } else {
+                    res.send(item);
+                    logger.info('количество товаров успешно изменено');
+                    }
+                });
+            }
+        });
+        }, transactionOptions);
+    }finally{
+        await session.endSession();
+    }
+    }
+    });    
 
     app.post('/warehouse/items', (req, res) => {
         if ( !Number.isInteger(+req.body.amount) || !+req.body.amount || !+req.body.price || !req.body.name) {
@@ -59,29 +98,5 @@ module.exports = function(app, db){
         });
     });
     
-    app.put('/warehouse/items/:id/addition/:amount', (req,res) =>{
-        const id = req.params.id;
-        const info = { '_id': new ObjectID(id) };
-        const amount = +req.params.amount;
-        if ( !req.params.amount || !Number.isInteger(+req.params.amount)) {
-            logger.error('данные количества введены не верно');
-            res.status(400).send('amount is not numeric or not integer');
-        } else {
-        db.collection('warehousecollection').update( info, {$inc: { amount: +amount } }, (err, item) => {
-            if(err) {
-                res.send({ 'error': 'an error has occured' });
-                logger.error('не удалось изменить данные о товаре');
-            } else {
-                db.collection('warehousecollection').findOne(info, (err, item) => {
-                    if(err) {
-                        res.send({ 'error': 'an error has occured' });
-                    } else {
-                    res.send(item);
-                    logger.info('количество товаров успешно изменено');
-                    }
-                });
-            }
-        });
-    }
-    });    
+   
 };
