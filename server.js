@@ -3,6 +3,7 @@ const MongoClient   = require('mongodb').MongoClient;
 const BodyParser    = require('body-parser');
 const app           = express();
 const route         = require("./app/routes.js");
+const reciever      = require("./app/reciever.js")
 
 const port = 3000;
 const url = 'mongodb://localhost:27017';
@@ -18,10 +19,12 @@ MongoClient.connect(url, function(err, database) {
     }
     const db = database.db(dbName);
     route(app, db, client);
+    reciever(db, client);
     app.listen(port, () =>{
         console.log('hello: ' + port);
     });
 });
+
 
 
 
