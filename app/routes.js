@@ -8,10 +8,17 @@ const logger = log4js.getLogger('server');
 
 module.exports = function (app, db, client) {
 
+    async function autoIncrement() {
+        const info = { '_id': new ObjectID('5df4a84c00bc2f0539ffb3e1') };
+        console.log(info);
+        const nextID = await db.collection('countcollection').findOneAndUpdate(info, { $inc: { count: 1 } });
+        console.log(nextID);
+        return nextID.value.count;
+    };
 
     app.put('/warehouse/items/:id/addition/:amount', async (req, res) => {
-        const id = req.params.id;
-        const info = { '_id': new ObjectID(id) };
+        const id = +req.params.id;
+        console.log(id);
         const amount = +req.params.amount;
         if (!req.params.amount || !Number.isInteger(+req.params.amount)) {
             logger.error('данные количества введены не верно');
@@ -25,12 +32,13 @@ module.exports = function (app, db, client) {
             };
             try {
                 await session.withTransaction(async () => {
-                    await db.collection('warehousecollection').update(info, { $inc: { amount: +amount } }, (err, item) => {
+
+                    await db.collection('warehousecollection').update({id: id}, { $inc: { amount: +amount } }, (err, item) => {
                         if (err) {
                             res.send({ 'error': 'an error has occured' });
                             logger.error('не удалось изменить данные о товаре');
                         } else {
-                            db.collection('warehousecollection').findOne(info, (err, item) => {
+                            db.collection('warehousecollection').findOne({id: id}, (err, item) => {
                                 if (err) {
                                     res.send({ 'error': 'an error has occured' });
                                 } else {
@@ -45,6 +53,7 @@ module.exports = function (app, db, client) {
                             });
                         }
                     });
+
                 }, transactionOptions);
             } finally {
                 await session.endSession();
@@ -52,14 +61,16 @@ module.exports = function (app, db, client) {
         }
     });
 
-  
 
-    app.post('/warehouse/items', (req, res) => {
+
+    app.post('/warehouse/items', async (req, res) => {
         if (!Number.isInteger(+req.body.amount) || !+req.body.amount || !+req.body.price || !req.body.name) {
             res.status(400).send('amount or price is not numeric or amount is not integer');
             logger.error('данные цены или количества введены не верно');
         } else {
-            const note = { name: req.body.name, amount: +req.body.amount, price: +req.body.price };
+            const customID = await autoIncrement();
+         
+            const note = { id: customID, name: req.body.name, amount: +req.body.amount, price: +req.body.price };
             db.collection('warehousecollection').insert(note, (err, result) => {
                 if (err) {
                     res.send({ 'error': 'an error has occured' });
@@ -73,9 +84,10 @@ module.exports = function (app, db, client) {
     });
 
     app.get('/warehouse/items/:id', (req, res) => {
-        const id = req.params.id;
-        const info = { '_id': new ObjectID(id) };
-        db.collection('warehousecollection').findOne(info, (err, item) => {
+        const id = +req.params.id;
+        //const info = { '_id': new ObjectID(id) };
+console.log(id);
+        db.collection('warehousecollection').findOne({id: id}, (err, item) => {
             if (err) {
                 res.send({ 'error': 'an error has occured' });
                 logger.error('не удалось получить данные по id');

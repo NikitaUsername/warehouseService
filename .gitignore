@@ -2582,3 +2582,4 @@ node_modules/url-parse/README.md
 node_modules/url-parse/dist/url-parse.js
 node_modules/url-parse/dist/url-parse.min.js
 node_modules/url-parse/dist/url-parse.min.js.map
+app/producer.js

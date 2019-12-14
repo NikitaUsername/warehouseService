@@ -13,8 +13,8 @@ amqp.connect('amqp://localhost', function(error0, connection) {
     var exchange = 'warehouseCommandExchange';
     var msg =  {
       orderID: 1,
-      id: '5da872187300a32d8433c3cf',
-      amount: 4
+      id: 3,
+      amount: 1
     };
 
     channel.assertExchange(exchange, 'direct', {

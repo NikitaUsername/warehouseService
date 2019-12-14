@@ -37,7 +37,7 @@ module.exports = function (db, client) {
                     if (message.content) {
 
                         const messageData = JSON.parse(message.content.toString());
-                        const info = { '_id': new ObjectID(messageData.id) };
+                        const info = { 'id': +messageData.id };
                         const wareData = await db.collection('warehousecollection').findOne(info);
                         console.log(wareData);
                         const amount = messageData.amount;
@@ -56,7 +56,7 @@ module.exports = function (db, client) {
 
                                     await db.collection('reservecollection').updateOne(
                                         { orderID: messageData.orderID },
-                                        { $push: { items: { id: messageData.id, amount: amount } } },
+                                        { $push: { items: { id: +messageData.id, amount: amount } } },
                                         { upsert: true /*, session*/ });
 
                                     await db.collection('warehousecollection').update(
@@ -108,7 +108,7 @@ module.exports = function (db, client) {
                                     console.log(info.value.returned);
                                     if (info.value.returned === 'false') {
                                         info.value.items.map(async item => {
-                                            const info = { '_id': new ObjectID(item.id) };
+                                            const info = { 'id': +item.id };
                                             await db.collection('warehousecollection').update(info, { $inc: { amount: +item.amount } }, (err, result) => {
                                                 if (err) {
                                                     //   logger.error('не удалось вернуть товар на склад');
@@ -132,8 +132,6 @@ module.exports = function (db, client) {
                     noAck: true
                 });
             });
-
-
         });
     });
 };
