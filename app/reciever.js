@@ -16,10 +16,10 @@ module.exports = function (db, client) {
             const eventEx = 'statusExchange';
 
             channel.assertExchange(eventEx, 'fanout', {
-                durable: false
+                durable: true
             });
             channel.assertExchange(commandEx, 'direct', {
-                durable: false
+                durable: true
             });
 
             channel.assertQueue('', {
@@ -31,7 +31,7 @@ module.exports = function (db, client) {
                 console.log('waiting for commands');
 
 
-                channel.bindQueue(q.queue, commandEx, 'addItemToOrder');
+                channel.bindQueue(q.queue, commandEx, 'whcKey');
                 channel.consume(q.queue, async function (message) {
 
                     if (message.content) {
@@ -55,7 +55,10 @@ module.exports = function (db, client) {
                                 } else {
 
                                     await db.collection('reservecollection').updateOne(
-                                        { orderID: messageData.orderID },
+                                        {
+                                            orderID: messageData.orderID,
+                                            returned: 'false'
+                                        },
                                         { $push: { items: { id: +messageData.id, amount: amount } } },
                                         { upsert: true /*, session*/ });
 
@@ -92,7 +95,8 @@ module.exports = function (db, client) {
                     if (message.content) {
 
                         const messageData = JSON.parse(message.content.toString());
-                        if (messageData.status == 'failed') {
+                        console.log(messageData);
+                        if (messageData.status === 'FAILED') {
                             const session = client.startSession();
                             const transactionOptions = {
                                 readPreference: 'primary',

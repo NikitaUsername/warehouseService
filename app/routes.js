@@ -9,9 +9,9 @@ const logger = log4js.getLogger('server');
 module.exports = function (app, db, client) {
 
     async function autoIncrement() {
-        const info = { '_id': new ObjectID('5df4a84c00bc2f0539ffb3e1') };
+        const info = { '_id': new ObjectID('5df4b01dc4024e05342a7559') };
         console.log(info);
-        const nextID = await db.collection('countcollection').findOneAndUpdate(info, { $inc: { count: 1 } });
+        const nextID = await db.collection('count').findOneAndUpdate(info, { $inc: { count: 1 } });
         console.log(nextID);
         return nextID.value.count;
     };
