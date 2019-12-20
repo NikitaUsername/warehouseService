@@ -1,10 +1,5 @@
 var ObjectID = require('mongodb').ObjectID;
-const log4js = require('log4js');
-log4js.configure({
-    appenders: { fileAppender: { type: 'file', filename: 'events.log' } },
-    categories: { default: { appenders: ['fileAppender'], level: 'info' } }
-});
-const logger = log4js.getLogger('server');
+
 
 module.exports = function (app, db, client) {
 
